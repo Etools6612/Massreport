@@ -5,117 +5,111 @@
 <title>Mass Report Tool (Simulation)</title>
 
 <style>
-*{
-  font-family: Consolas, monospace;
-  box-sizing: border-box;
-}
+*{font-family:Consolas,monospace;box-sizing:border-box}
 
-/* MATRIX BACKGROUND */
+/* MATRIX */
 canvas{
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: -1;
+  position:fixed;
+  top:0;left:0;
+  z-index:-1;
 }
 
 body{
-  margin: 0;
-  min-height: 100vh;
-  background: black;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #0f0;
+  margin:0;
+  min-height:100vh;
+  background:black;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  color:#0f0;
 }
 
 .container{
-  width: 440px;
-  max-width: 95%;
-  background: rgba(0,0,0,0.75);
-  border-radius: 18px;
-  padding: 18px;
-  box-shadow: 0 0 35px rgba(0,255,0,0.35);
+  width:440px;
+  max-width:95%;
+  background:rgba(0,0,0,.78);
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 0 35px rgba(0,255,0,.35);
 }
 
 h2{
-  text-align: center;
-  color: #00ff7f;
-  margin-bottom: 10px;
+  text-align:center;
+  color:#00ff7f;
+  margin-bottom:10px;
 }
 
 .targets{
-  display: flex;
-  justify-content: space-around;
-  font-size: 13px;
+  display:flex;
+  justify-content:space-around;
+  font-size:13px;
 }
 
-/* INPUTS */
-input, select, button{
-  width: 100%;
-  padding: 9px;
-  margin-top: 7px;
-  border-radius: 7px;
-  border: none;
-  background: rgba(0,255,0,0.08);
-  color: #0f0;
+input,select,button{
+  width:100%;
+  padding:9px;
+  margin-top:7px;
+  border-radius:7px;
+  border:none;
+  background:rgba(0,255,0,.1);
+  color:#0f0;
 }
 
 button{
-  background: linear-gradient(135deg,#00ff7f,#00cc66);
-  color: #000;
-  font-weight: bold;
-  cursor: pointer;
+  background:linear-gradient(135deg,#00ff7f,#00cc66);
+  color:#000;
+  font-weight:bold;
+  cursor:pointer;
 }
 
-button:disabled{
-  opacity: .5;
+button:disabled{opacity:.5}
+
+/* LINK STATUS */
+.link-status{
+  margin-top:6px;
+  font-size:12px;
 }
+.inactive{color:#ff4d4d}
+.active{color:#00ff7f}
 
 /* PROGRESS */
 .progress-wrap{
-  margin-top: 10px;
-  background: rgba(0,255,0,0.15);
-  border-radius: 6px;
-  overflow: hidden;
+  margin-top:10px;
+  background:rgba(0,255,0,.15);
+  border-radius:6px;
+  overflow:hidden;
 }
 .progress{
-  height: 8px;
-  width: 0%;
-  background: linear-gradient(90deg,#00ff7f,#00ffaa);
-  transition: width .3s;
+  height:8px;
+  width:0%;
+  background:linear-gradient(90deg,#00ff7f,#00ffaa);
 }
-
 .eta{
-  font-size: 11px;
-  margin-top: 4px;
-  text-align: right;
+  font-size:11px;
+  text-align:right;
+  margin-top:4px;
 }
 
 /* STATUS */
 .status-box{
-  margin-top: 10px;
-  height: 250px;
-  overflow-y: auto;
-  font-size: 12px;
+  margin-top:10px;
+  height:240px;
+  overflow-y:auto;
+  font-size:12px;
 }
 .log{
-  padding: 8px;
-  margin-bottom: 8px;
-  border-left: 3px solid #00ff7f;
-  background: rgba(0,255,0,0.08);
+  padding:8px;
+  margin-bottom:8px;
+  border-left:3px solid #00ff7f;
+  background:rgba(0,255,0,.08);
 }
-.final{
-  border-left-color: #1e90ff;
-}
-.note{
-  color: #ffbaba;
-  font-size: 11px;
-}
+.final{border-left-color:#1e90ff}
+.note{color:#ffbaba;font-size:11px}
 
 /* MOBILE */
 @media(max-width:420px){
-  .status-box{ height: 210px; }
-  h2{ font-size: 16px; }
+  .status-box{height:200px}
+  h2{font-size:16px}
 }
 </style>
 </head>
@@ -142,96 +136,103 @@ button:disabled{
   </select>
 
   <input id="link" placeholder="Target Link">
-  <button id="checkBtn" onclick="checkLink()">Check Link</button>
+  <button id="checkBtn">Check Link</button>
+  <div class="link-status inactive" id="linkStatus">● Link Inactive</div>
 
   <input id="qty" type="number" placeholder="Quantity">
 
   <div class="progress-wrap">
     <div class="progress" id="progress"></div>
   </div>
-  <div class="eta" id="eta">Estimated Time: --</div>
+  <div class="eta" id="eta">Estimated Time Remaining: --</div>
 
-  <button id="runBtn" onclick="startReport()">Run Process</button>
+  <button id="runBtn" disabled>Run Process</button>
 
   <div class="status-box" id="status"></div>
 </div>
 
 <script>
-/* ================= MATRIX RAIN ================= */
-const canvas = document.getElementById("matrix");
-const ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+/* ===== MATRIX RAIN ===== */
+const canvas=document.getElementById("matrix");
+const ctx=canvas.getContext("2d");
+canvas.width=innerWidth; canvas.height=innerHeight;
+const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const size=14, cols=canvas.width/size;
+const drops=Array(Math.floor(cols)).fill(1);
 
-const letters = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ@$%&";
-const fontSize = 14;
-const columns = canvas.width / fontSize;
-const drops = Array(Math.floor(columns)).fill(1);
-
-function drawMatrix(){
-  ctx.fillStyle = "rgba(0,0,0,0.08)";
+setInterval(()=>{
+  ctx.fillStyle="rgba(0,0,0,.08)";
   ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle = "#0f0";
-  ctx.font = fontSize+"px Consolas";
-
+  ctx.fillStyle="#0f0";
+  ctx.font=size+"px Consolas";
   drops.forEach((y,i)=>{
-    const text = letters[Math.floor(Math.random()*letters.length)];
-    ctx.fillText(text,i*fontSize,y*fontSize);
-    if(y*fontSize > canvas.height && Math.random() > 0.975)
-      drops[i]=0;
+    const t=chars[Math.floor(Math.random()*chars.length)];
+    ctx.fillText(t,i*size,y*size);
+    if(y*size>canvas.height&&Math.random()>.975)drops[i]=0;
     drops[i]++;
   });
-}
-setInterval(drawMatrix, 50);
+},50);
 
-/* ================= TOOL LOGIC ================= */
-let startTime = 0;
-let perProcessMs = 650;
+/* ===== TOOL LOGIC ===== */
+const linkInput=document.getElementById("link");
+const qtyInput=document.getElementById("qty");
+const statusBox=document.getElementById("status");
+const progress=document.getElementById("progress");
+const eta=document.getElementById("eta");
+const runBtn=document.getElementById("runBtn");
+const checkBtn=document.getElementById("checkBtn");
+const linkStatus=document.getElementById("linkStatus");
+const reason=document.getElementById("reason");
 
-function r(max){ return Math.floor(Math.random()*max); }
-function ip(){ return `${r(255)}.${r(255)}.${r(255)}.${r(255)}`; }
+let linkActive=false;
+let startTime=0;
+const perProcess=650;
 
+function r(max){return Math.floor(Math.random()*max)}
+function ip(){return`${r(255)}.${r(255)}.${r(255)}.${r(255)}`}
 function token(){
-  const c="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let t="EAA";
-  for(let i=0;i<45;i++) t+=c[Math.floor(Math.random()*c.length)];
+  let t="EAA",c="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  for(let i=0;i<45;i++)t+=c[Math.floor(Math.random()*c.length)];
   return t;
 }
 
-function checkLink(){
-  const btn = checkBtn;
-  btn.disabled = true;
-  btn.innerText = "Checking...";
+/* LINK CHECK */
+checkBtn.onclick=()=>{
+  if(!linkInput.value){alert("Enter link first");return}
+  checkBtn.disabled=true;
+  linkStatus.textContent="● Checking link...";
+  linkStatus.className="link-status inactive";
+
   setTimeout(()=>{
-    status.innerHTML += `<div class="log">🔍 Link valid ✔</div>`;
-    status.scrollTop = status.scrollHeight;
-    btn.disabled = false;
-    btn.innerText = "Check Link";
-  }, (r(4)+5)*1000);
-}
+    linkActive=true;
+    linkStatus.textContent="● Link Active";
+    linkStatus.className="link-status active";
+    runBtn.disabled=false;
+    checkBtn.disabled=false;
+  },(r(4)+5)*1000);
+};
 
-function startReport(){
-  const qty = Number(qtyInput.value);
-  const link = linkInput.value;
-  if(!qty || !link){ alert("Fill all fields"); return; }
+/* RUN PROCESS */
+runBtn.onclick=()=>{
+  if(!linkActive){alert("Link not active");return}
+  const qty=Number(qtyInput.value);
+  if(!qty){alert("Enter quantity");return}
 
-  startTime = Date.now();
-  status.innerHTML = "";
-  progress.style.width = "0%";
-  runBtn.disabled = true;
+  statusBox.innerHTML="";
+  progress.style.width="0%";
+  startTime=Date.now();
+  runBtn.disabled=true;
 
-  const totalTime = (qty * perProcessMs) / 1000;
+  const totalTime=(qty*perProcess)/1000;
 
   for(let i=1;i<=qty;i++){
     setTimeout(()=>{
-      const percent = Math.floor((i/qty)*100);
-      progress.style.width = percent+"%";
+      const percent=Math.floor((i/qty)*100);
+      progress.style.width=percent+"%";
+      const elapsed=(Date.now()-startTime)/1000;
+      eta.textContent=`Estimated Time Remaining: ${(totalTime-elapsed).toFixed(1)}s`;
 
-      const elapsed = (Date.now()-startTime)/1000;
-      const remaining = Math.max(0,(totalTime - elapsed)).toFixed(1);
-      eta.innerText = `Estimated Time Remaining: ${remaining}s`;
-
-      status.innerHTML += `
+      statusBox.innerHTML+=`
       <div class="log">
         📌 Process ${i}<br>
         🔐 Authenticity: Fake<br>
@@ -240,17 +241,18 @@ function startReport(){
         🔑 ${token()}<br>
         ✅ Successful
       </div>`;
-      status.scrollTop = status.scrollHeight;
+      statusBox.scrollTop=statusBox.scrollHeight;
 
       if(i===qty) finish();
-    }, i*perProcessMs);
+    },i*perProcess);
   }
-}
+};
 
 function finish(){
-  const total = ((Date.now()-startTime)/1000).toFixed(1);
-  eta.innerText = "Estimated Time Remaining: 0s";
-  status.innerHTML += `
+  const total=((Date.now()-startTime)/1000).toFixed(1);
+  eta.textContent="Estimated Time Remaining: 0s";
+  progress.style.width="100%";
+  statusBox.innerHTML+=`
   <div class="log final">
     ✅ All report sent successfully<br>
     ⏱ Process Time: ${total}s<br><br>
@@ -259,8 +261,7 @@ function finish(){
       ⚠ Don't abuse processed links
     </div>
   </div>`;
-  progress.style.width = "100%";
-  runBtn.disabled = false;
+  runBtn.disabled=false;
 }
 </script>
 
