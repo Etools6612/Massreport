@@ -6,62 +6,66 @@
 
 <style>
 * {
-  font-family: Arial, sans-serif;
+  font-family: Consolas, monospace;
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  height: 100vh;
-  background: linear-gradient(135deg, #141e30, #243b55);
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #0f2027, #000);
   display: flex;
   justify-content: center;
   align-items: center;
-  color: #fff;
+  color: #0f0;
 }
 
+/* CONTAINER */
 .container {
-  width: 430px;
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(12px);
+  width: 440px;
+  max-width: 95%;
+  background: rgba(0,0,0,0.75);
   border-radius: 18px;
-  padding: 20px;
-  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+  padding: 18px;
+  box-shadow: 0 0 35px rgba(0,255,0,0.25);
+  animation: glow 2.5s infinite alternate;
+}
+
+@keyframes glow {
+  from { box-shadow: 0 0 20px rgba(0,255,0,0.2); }
+  to   { box-shadow: 0 0 40px rgba(0,255,0,0.5); }
 }
 
 h2 {
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
+  color: #00ff7f;
 }
 
 /* TARGET */
 .targets {
   display: flex;
   justify-content: space-around;
+  font-size: 13px;
   margin-bottom: 10px;
-  font-size: 14px;
 }
 
 /* INPUTS */
-input, button {
+input, select, button {
   width: 100%;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 9px;
+  border-radius: 7px;
   border: none;
-  margin-top: 8px;
+  margin-top: 7px;
+  background: rgba(0,255,0,0.08);
+  color: #0f0;
 }
 
-input {
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-}
-
-/* BUTTON */
 button {
-  background: #1e90ff;
-  color: white;
-  cursor: pointer;
+  background: linear-gradient(135deg, #00ff7f, #00cc66);
+  color: #000;
   font-weight: bold;
+  cursor: pointer;
 }
 
 button:disabled {
@@ -69,35 +73,50 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* PROGRESS BAR */
+.progress-wrap {
+  margin-top: 10px;
+  background: rgba(0,255,0,0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress {
+  height: 8px;
+  width: 0%;
+  background: linear-gradient(90deg, #00ff7f, #00ffaa);
+  transition: width 0.3s;
+}
+
 /* STATUS */
 .status-box {
-  margin-top: 15px;
-  height: 320px;
+  margin-top: 12px;
+  height: 260px;
   overflow-y: auto;
-  font-size: 13px;
-}
-
-/* LOG CARD */
-.log {
-  margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(0,255,127,0.18), rgba(0,0,0,0.65));
-  border-left: 4px solid #00ff7f;
-}
-
-.log b {
-  color: #00ff7f;
-}
-
-/* FINAL */
-.final {
-  background: rgba(0,0,0,0.6);
-  border-left: 4px solid #1e90ff;
-}
-.note {
   font-size: 12px;
-  color: #ffcccb;
+}
+
+.log {
+  margin-bottom: 8px;
+  padding: 8px;
+  border-left: 3px solid #00ff7f;
+  background: rgba(0,255,0,0.06);
+}
+
+.final {
+  border-left-color: #1e90ff;
+  background: rgba(30,144,255,0.15);
+}
+
+.note {
+  color: #ffbaba;
+  font-size: 11px;
+}
+
+/* MOBILE COMPACT */
+@media (max-width: 420px) {
+  .status-box { height: 220px; }
+  h2 { font-size: 16px; }
 }
 </style>
 </head>
@@ -105,7 +124,7 @@ button:disabled {
 <body>
 
 <div class="container">
-  <h2>⚠ Mass Report Tool (Simulation)</h2>
+  <h2>⚠ Mass Report Tool</h2>
 
   <div class="targets">
     <label><input type="radio" name="target" checked> Post</label>
@@ -113,10 +132,22 @@ button:disabled {
     <label><input type="radio" name="target"> Page</label>
   </div>
 
+  <select id="reason">
+    <option>Fake Account</option>
+    <option>Spam / Scam</option>
+    <option>Harassment</option>
+    <option>Hate Speech</option>
+    <option>Impersonation</option>
+  </select>
+
   <input id="link" placeholder="Target Link">
   <button id="checkBtn" onclick="checkLink()">Check Link</button>
 
   <input id="qty" type="number" placeholder="Quantity">
+
+  <div class="progress-wrap">
+    <div class="progress" id="progress"></div>
+  </div>
 
   <button id="runBtn" onclick="startReport()">Run Process</button>
 
@@ -124,118 +155,80 @@ button:disabled {
 </div>
 
 <script>
-let cooldown = false;
 let startTime = 0;
 
-/* RANDOM HELPERS */
-function rand(max) {
-  return Math.floor(Math.random() * max);
+function r(max){ return Math.floor(Math.random()*max); }
+function ip(){ return `${r(255)}.${r(255)}.${r(255)}.${r(255)}`; }
+
+function token(){
+  const c="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let t="EAA";
+  for(let i=0;i<45;i++) t+=c[Math.floor(Math.random()*c.length)];
+  return t;
 }
 
-function randomIP() {
-  return `${rand(255)}.${rand(255)}.${rand(255)}.${rand(255)}`;
+/* LINK CHECK */
+function checkLink(){
+  const btn=document.getElementById("checkBtn");
+  const status=document.getElementById("status");
+  const cd=r(4)+5;
+
+  btn.disabled=true;
+  btn.innerText=`Checking (${cd}s)...`;
+
+  setTimeout(()=>{
+    status.innerHTML+=`<div class="log">🔍 Link Status: Valid ✔</div>`;
+    status.scrollTop=status.scrollHeight;
+    btn.disabled=false;
+    btn.innerText="Check Link";
+  },cd*1000);
 }
 
-function fakeToken() {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let token = "EAA";
-  for (let i = 0; i < 45; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return token;
-}
+/* REPORT */
+function startReport(){
+  const qty=Number(qtyInput.value);
+  const link=linkInput.value;
+  if(!qty||!link){ alert("Fill all fields"); return; }
 
-/* LINK CHECK WITH 5–8s COOLDOWN */
-function checkLink() {
-  const btn = document.getElementById("checkBtn");
-  const status = document.getElementById("status");
-  const cd = rand(4) + 5; // 5–8 seconds
+  startTime=Date.now();
+  progress.style.width="0%";
+  status.innerHTML="";
 
-  btn.disabled = true;
-  btn.innerText = `Checking (${cd}s)...`;
+  for(let i=1;i<=qty;i++){
+    setTimeout(()=>{
+      const now=new Date();
+      const percent=Math.floor((i/qty)*100);
+      progress.style.width=percent+"%";
 
-  setTimeout(() => {
-    const log = document.createElement("div");
-    log.className = "log";
-    log.innerHTML = `
-<b>🔍 Link Checker</b><br>
-Status: Valid Link ✔
-`;
-    status.appendChild(log);
-    status.scrollTop = status.scrollHeight;
+      status.innerHTML+=`
+      <div class="log">
+      📌 Process ${i}<br>
+      🔐 Authenticity: Fake<br>
+      🧾 Reason: ${reason.value}<br>
+      🌐 IP: ${ip()}<br>
+      ⏰ ${now.toLocaleTimeString()}<br>
+      🔑 ${token()}<br>
+      ✅ Successful
+      </div>`;
+      status.scrollTop=status.scrollHeight;
 
-    btn.disabled = false;
-    btn.innerText = "Check Link";
-  }, cd * 1000);
-}
-
-/* REPORT PROCESS */
-function startReport() {
-  if (cooldown) return;
-
-  const qty = Number(document.getElementById("qty").value);
-  const link = document.getElementById("link").value;
-  const status = document.getElementById("status");
-  const btn = document.getElementById("runBtn");
-
-  if (!qty || !link) {
-    alert("Fill all fields");
-    return;
-  }
-
-  startTime = Date.now();
-  cooldown = true;
-  btn.disabled = true;
-  btn.innerText = "Processing...";
-
-  for (let i = 1; i <= qty; i++) {
-    setTimeout(() => {
-      const now = new Date();
-      const log = document.createElement("div");
-      log.className = "log";
-      log.innerHTML = `
-<b>📌 Report Process ${i}</b><br>
-🔐 Authenticity: Fake<br>
-🌐 IP Address: ${randomIP()}<br>
-📅 Date: ${now.toLocaleDateString()}<br>
-⏰ Time: ${now.toLocaleTimeString()}<br>
-📎 Link: ${link}<br>
-🔑 Token: ${fakeToken()}<br>
-✅ Status: Successful
-`;
-      status.appendChild(log);
-      status.scrollTop = status.scrollHeight;
-
-      /* FINAL SUMMARY */
-      if (i === qty) {
-        setTimeout(showFinal, 800);
-      }
-    }, i * 700);
+      if(i===qty) finish();
+    },i*650);
   }
 }
 
-/* FINAL MESSAGE */
-function showFinal() {
-  const status = document.getElementById("status");
-  const btn = document.getElementById("runBtn");
-  const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
-
-  const final = document.createElement("div");
-  final.className = "log final";
-  final.innerHTML = `
-<b>✅ All report sent successfully</b><br>
-⏱ Process Time: ${totalTime} seconds<br><br>
-<div class="note">
-⚠ Mass report tool has 50–60% chance of suspension or success.<br>
-⚠ Don't abuse links you process. Some links may remain valid.
-</div>
-`;
-  status.appendChild(final);
-  status.scrollTop = status.scrollHeight;
-
-  btn.disabled = false;
-  btn.innerText = "Run Process";
-  cooldown = false;
+function finish(){
+  const t=((Date.now()-startTime)/1000).toFixed(1);
+  status.innerHTML+=`
+  <div class="log final">
+  ✅ All report sent successfully<br>
+  ⏱ Process Time: ${t}s<br><br>
+  <div class="note">
+  ⚠ 50–60% chance of suspension or success<br>
+  ⚠ Don't abuse processed links
+  </div>
+  </div>`;
+  progress.style.width="100%";
 }
 </script>
 
