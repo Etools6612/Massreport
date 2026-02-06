@@ -5,123 +5,124 @@
 <title>Mass Report Tool (Simulation)</title>
 
 <style>
-* {
+*{
   font-family: Consolas, monospace;
   box-sizing: border-box;
 }
 
-body {
+/* MATRIX BACKGROUND */
+canvas{
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+}
+
+body{
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top, #0f2027, #000);
+  background: black;
   display: flex;
   justify-content: center;
   align-items: center;
   color: #0f0;
 }
 
-/* CONTAINER */
-.container {
+.container{
   width: 440px;
   max-width: 95%;
   background: rgba(0,0,0,0.75);
   border-radius: 18px;
   padding: 18px;
-  box-shadow: 0 0 35px rgba(0,255,0,0.25);
-  animation: glow 2.5s infinite alternate;
+  box-shadow: 0 0 35px rgba(0,255,0,0.35);
 }
 
-@keyframes glow {
-  from { box-shadow: 0 0 20px rgba(0,255,0,0.2); }
-  to   { box-shadow: 0 0 40px rgba(0,255,0,0.5); }
-}
-
-h2 {
+h2{
   text-align: center;
-  margin-bottom: 12px;
   color: #00ff7f;
-}
-
-/* TARGET */
-.targets {
-  display: flex;
-  justify-content: space-around;
-  font-size: 13px;
   margin-bottom: 10px;
 }
 
+.targets{
+  display: flex;
+  justify-content: space-around;
+  font-size: 13px;
+}
+
 /* INPUTS */
-input, select, button {
+input, select, button{
   width: 100%;
   padding: 9px;
+  margin-top: 7px;
   border-radius: 7px;
   border: none;
-  margin-top: 7px;
   background: rgba(0,255,0,0.08);
   color: #0f0;
 }
 
-button {
-  background: linear-gradient(135deg, #00ff7f, #00cc66);
+button{
+  background: linear-gradient(135deg,#00ff7f,#00cc66);
   color: #000;
   font-weight: bold;
   cursor: pointer;
 }
 
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+button:disabled{
+  opacity: .5;
 }
 
-/* PROGRESS BAR */
-.progress-wrap {
+/* PROGRESS */
+.progress-wrap{
   margin-top: 10px;
-  background: rgba(0,255,0,0.1);
+  background: rgba(0,255,0,0.15);
   border-radius: 6px;
   overflow: hidden;
 }
-
-.progress {
+.progress{
   height: 8px;
   width: 0%;
-  background: linear-gradient(90deg, #00ff7f, #00ffaa);
-  transition: width 0.3s;
+  background: linear-gradient(90deg,#00ff7f,#00ffaa);
+  transition: width .3s;
+}
+
+.eta{
+  font-size: 11px;
+  margin-top: 4px;
+  text-align: right;
 }
 
 /* STATUS */
-.status-box {
-  margin-top: 12px;
-  height: 260px;
+.status-box{
+  margin-top: 10px;
+  height: 250px;
   overflow-y: auto;
   font-size: 12px;
 }
-
-.log {
-  margin-bottom: 8px;
+.log{
   padding: 8px;
+  margin-bottom: 8px;
   border-left: 3px solid #00ff7f;
-  background: rgba(0,255,0,0.06);
+  background: rgba(0,255,0,0.08);
 }
-
-.final {
+.final{
   border-left-color: #1e90ff;
-  background: rgba(30,144,255,0.15);
 }
-
-.note {
+.note{
   color: #ffbaba;
   font-size: 11px;
 }
 
-/* MOBILE COMPACT */
-@media (max-width: 420px) {
-  .status-box { height: 220px; }
-  h2 { font-size: 16px; }
+/* MOBILE */
+@media(max-width:420px){
+  .status-box{ height: 210px; }
+  h2{ font-size: 16px; }
 }
 </style>
 </head>
 
 <body>
+
+<canvas id="matrix"></canvas>
 
 <div class="container">
   <h2>⚠ Mass Report Tool</h2>
@@ -148,6 +149,7 @@ button:disabled {
   <div class="progress-wrap">
     <div class="progress" id="progress"></div>
   </div>
+  <div class="eta" id="eta">Estimated Time: --</div>
 
   <button id="runBtn" onclick="startReport()">Run Process</button>
 
@@ -155,7 +157,36 @@ button:disabled {
 </div>
 
 <script>
+/* ================= MATRIX RAIN ================= */
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const letters = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ@$%&";
+const fontSize = 14;
+const columns = canvas.width / fontSize;
+const drops = Array(Math.floor(columns)).fill(1);
+
+function drawMatrix(){
+  ctx.fillStyle = "rgba(0,0,0,0.08)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "#0f0";
+  ctx.font = fontSize+"px Consolas";
+
+  drops.forEach((y,i)=>{
+    const text = letters[Math.floor(Math.random()*letters.length)];
+    ctx.fillText(text,i*fontSize,y*fontSize);
+    if(y*fontSize > canvas.height && Math.random() > 0.975)
+      drops[i]=0;
+    drops[i]++;
+  });
+}
+setInterval(drawMatrix, 50);
+
+/* ================= TOOL LOGIC ================= */
 let startTime = 0;
+let perProcessMs = 650;
 
 function r(max){ return Math.floor(Math.random()*max); }
 function ip(){ return `${r(255)}.${r(255)}.${r(255)}.${r(255)}`; }
@@ -167,68 +198,69 @@ function token(){
   return t;
 }
 
-/* LINK CHECK */
 function checkLink(){
-  const btn=document.getElementById("checkBtn");
-  const status=document.getElementById("status");
-  const cd=r(4)+5;
-
-  btn.disabled=true;
-  btn.innerText=`Checking (${cd}s)...`;
-
+  const btn = checkBtn;
+  btn.disabled = true;
+  btn.innerText = "Checking...";
   setTimeout(()=>{
-    status.innerHTML+=`<div class="log">🔍 Link Status: Valid ✔</div>`;
-    status.scrollTop=status.scrollHeight;
-    btn.disabled=false;
-    btn.innerText="Check Link";
-  },cd*1000);
+    status.innerHTML += `<div class="log">🔍 Link valid ✔</div>`;
+    status.scrollTop = status.scrollHeight;
+    btn.disabled = false;
+    btn.innerText = "Check Link";
+  }, (r(4)+5)*1000);
 }
 
-/* REPORT */
 function startReport(){
-  const qty=Number(qtyInput.value);
-  const link=linkInput.value;
-  if(!qty||!link){ alert("Fill all fields"); return; }
+  const qty = Number(qtyInput.value);
+  const link = linkInput.value;
+  if(!qty || !link){ alert("Fill all fields"); return; }
 
-  startTime=Date.now();
-  progress.style.width="0%";
-  status.innerHTML="";
+  startTime = Date.now();
+  status.innerHTML = "";
+  progress.style.width = "0%";
+  runBtn.disabled = true;
+
+  const totalTime = (qty * perProcessMs) / 1000;
 
   for(let i=1;i<=qty;i++){
     setTimeout(()=>{
-      const now=new Date();
-      const percent=Math.floor((i/qty)*100);
-      progress.style.width=percent+"%";
+      const percent = Math.floor((i/qty)*100);
+      progress.style.width = percent+"%";
 
-      status.innerHTML+=`
+      const elapsed = (Date.now()-startTime)/1000;
+      const remaining = Math.max(0,(totalTime - elapsed)).toFixed(1);
+      eta.innerText = `Estimated Time Remaining: ${remaining}s`;
+
+      status.innerHTML += `
       <div class="log">
-      📌 Process ${i}<br>
-      🔐 Authenticity: Fake<br>
-      🧾 Reason: ${reason.value}<br>
-      🌐 IP: ${ip()}<br>
-      ⏰ ${now.toLocaleTimeString()}<br>
-      🔑 ${token()}<br>
-      ✅ Successful
+        📌 Process ${i}<br>
+        🔐 Authenticity: Fake<br>
+        🧾 Reason: ${reason.value}<br>
+        🌐 IP: ${ip()}<br>
+        🔑 ${token()}<br>
+        ✅ Successful
       </div>`;
-      status.scrollTop=status.scrollHeight;
+      status.scrollTop = status.scrollHeight;
 
       if(i===qty) finish();
-    },i*650);
+    }, i*perProcessMs);
   }
 }
 
 function finish(){
-  const t=((Date.now()-startTime)/1000).toFixed(1);
-  status.innerHTML+=`
+  const total = ((Date.now()-startTime)/1000).toFixed(1);
+  eta.innerText = "Estimated Time Remaining: 0s";
+  status.innerHTML += `
   <div class="log final">
-  ✅ All report sent successfully<br>
-  ⏱ Process Time: ${t}s<br><br>
-  <div class="note">
-  ⚠ 50–60% chance of suspension or success<br>
-  ⚠ Don't abuse processed links
-  </div>
+    ✅ All report sent successfully<br>
+    ⏱ Process Time: ${total}s<br><br>
+    <div class="note">
+      ⚠ 50–60% chance of suspension or success<br>
+      ⚠ Don't abuse processed links
+    </div>
   </div>`;
-  progress.style.width="100%";
+  progress.style.width = "100%";
+  runBtn.disabled = false;
 }
 </script>
 
