@@ -1,57 +1,137 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Mass Report ⚠️</title>
+<meta charset="UTF-8">
+<title>Mass Report Simulator</title>
 <style>
-body{background:#0f172a;color:white;font-family:sans-serif}
-.box{background:#111827;padding:15px;border-radius:10px;margin:10px}
-button{padding:10px 15px;background:#2563eb;color:white;border:none;border-radius:6px}
-.success{color:#22c55e}
-.loading{color:#eab308}
+* {
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+
+.container {
+  width: 380px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.4);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+input, button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  margin-top: 8px;
+}
+
+input {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+}
+
+button {
+  background: #1e90ff;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.status-box {
+  margin-top: 15px;
+  max-height: 220px;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.log {
+  margin-bottom: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.4);
+  color: #7CFC00;
+}
 </style>
 </head>
 <body>
 
-<h2>⚠️ Mass Report</h2>
+<div class="container">
+  <h2>⚠ Mass Report (Simulation)</h2>
 
-<div class="box">
-<b>Select Target</b><br>
-<input type="radio" name="t"> Post
-<input type="radio" name="t"> Video
-<input type="radio" name="t"> Profile
+  <input id="link" placeholder="Target Link (fake)">
+  <input id="qty" type="number" placeholder="Quantity">
+
+  <button onclick="startReport()">Run Process</button>
+
+  <div class="status-box" id="status"></div>
 </div>
-
-<div class="box">
-<input placeholder="Enter FB Link" id="link">
-<button onclick="checkLink()">Check Link</button>
-<p id="linkStatus"></p>
-</div>
-
-<div class="box">
-<input type="number" id="qty" placeholder="1 - 5000" disabled>
-<button onclick="start()">Run Process</button>
-</div>
-
-<div class="box" id="log"></div>
 
 <script>
-function checkLink(){
- let s=document.getElementById("linkStatus");
- s.innerHTML="<span class='loading'>Checking...</span>";
- setTimeout(()=>{
-  s.innerHTML="<span class='success'>Valid link ✔️</span>";
-  document.getElementById("qty").disabled=false;
- },5000);
+function randomIP() {
+  return `${rand()}.${rand()}.${rand()}.${rand()}`;
 }
-function start(){
- let log=document.getElementById("log");
- let count=0;
- let max=document.getElementById("qty").value;
- let i=setInterval(()=>{
-  count++;
-  log.innerHTML+=`<p class='success'>Report ${count} sent ✔️</p>`;
-  if(count>=max) clearInterval(i);
- },5000);
+
+function rand() {
+  return Math.floor(Math.random() * 255);
+}
+
+function fakeToken() {
+  return "FAKE_TOKEN_" + Math.random().toString(36).substring(2,12);
+}
+
+function startReport() {
+  const qty = document.getElementById("qty").value;
+  const link = document.getElementById("link").value;
+  const status = document.getElementById("status");
+
+  status.innerHTML = "";
+
+  if (!qty || !link) {
+    alert("Fill all fields");
+    return;
+  }
+
+  for (let i = 1; i <= qty; i++) {
+    setTimeout(() => {
+      const now = new Date();
+      const log = document.createElement("div");
+      log.className = "log";
+      log.innerHTML = `
+<b>Report Process ${i}</b><br>
+Authenticity: Fake<br>
+IP Address: ${randomIP()}<br>
+Date: ${now.getDate()}<br>
+Month: ${now.getMonth()+1}<br>
+Time: ${now.toLocaleTimeString()}<br>
+Status: Successful<br>
+Link: ${link}<br>
+Token: ${fakeToken()}<br>
+✔ Successfully Reported
+`;
+      status.appendChild(log);
+      status.scrollTop = status.scrollHeight;
+    }, i * 700);
+  }
 }
 </script>
 
