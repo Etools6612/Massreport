@@ -188,13 +188,13 @@ runBtn.onclick=()=>{
    const p=Math.floor((i/q)*100);
    progress.style.width=p+"%";
    const el=(Date.now()-start)/1000;
-   eta.textContent=`Estimated Time Remaining: ${(total-el).toFixed(1)}s`;
+   eta.textContent=`Estimated Time Remaining: ${(total-el).toFixed(5)}s`;
 
    const t=now();
    status.innerHTML+=`
    <div class="log">
     🔄 Report Process ${i}<br>
-    🔐 Authenticity: <b>FAKE</b><br>
+    🔐 Country : <b>🇵🇭</b><br>
     🌐 IP Address: ${fakeIP()}<br>
     📅 Date: ${t.date}<br>
     📆 Month: ${t.month}<br>
