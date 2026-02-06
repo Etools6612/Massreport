@@ -194,7 +194,7 @@ runBtn.onclick=()=>{
    status.innerHTML+=`
    <div class="log">
     🔄 Report Process ${i}<br>
-    🔐 Authenticity: <b>FAKE</b><br>
+    🔐 Country: <b>🇵🇭</b><br>
     🌐 IP Address: ${fakeIP()}<br>
     📅 Date: ${t.date}<br>
     📆 Month: ${t.month}<br>
@@ -217,7 +217,7 @@ function finish(){
  status.innerHTML+=`
  <div class="log final">
   ✅ All reports completed<br>
-  ⚠ Simulation only / Fake data
+  ⚠ dont process same link with in 24 hours 
  </div>`;
  runBtn.disabled=false;
 }
