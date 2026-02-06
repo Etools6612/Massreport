@@ -2,124 +2,78 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Mass Report Tool (Simulation)</title>
+<title>Live Status Report (Simulation)</title>
 
 <style>
-*{
-  box-sizing:border-box;
-  font-family:Consolas,monospace;
-}
+*{font-family:Consolas,monospace;box-sizing:border-box}
+canvas{position:fixed;top:0;left:0;z-index:-1}
 body{
   margin:0;
+  background:black;
   min-height:100vh;
-  background:#000;
-  color:#0f0;
   display:flex;
   justify-content:center;
   align-items:center;
-  overflow:hidden;
+  color:#0f0;
 }
-
-/* MATRIX BACKGROUND */
-canvas{
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  z-index:-1;
-}
-
-/* CONTAINER */
 .container{
   width:440px;
   max-width:95%;
-  background:rgba(0,0,0,.75);
-  border-radius:16px;
-  padding:16px;
-  box-shadow:0 0 35px rgba(0,255,0,.35);
+  background:rgba(0,0,0,.8);
+  padding:18px;
+  border-radius:18px;
+  box-shadow:0 0 30px rgba(0,255,0,.4);
 }
+h2{text-align:center;color:#00ff7f}
 
-/* HEADER */
-h2{
-  text-align:center;
-  margin-bottom:10px;
-  color:#00ff7f;
-}
-
-/* TARGET */
-.targets{
-  display:flex;
-  justify-content:space-around;
-  font-size:13px;
-  margin-bottom:8px;
-}
-
-/* INPUTS */
 input,select,button{
   width:100%;
   padding:9px;
   margin-top:7px;
+  border-radius:7px;
   border:none;
-  border-radius:6px;
-  background:rgba(0,255,0,.08);
+  background:rgba(0,255,0,.12);
   color:#0f0;
 }
 button{
   background:linear-gradient(135deg,#00ff7f,#00cc66);
-  color:#000;
+  color:black;
   font-weight:bold;
   cursor:pointer;
 }
-button:disabled{
-  opacity:.5;
-  cursor:not-allowed;
-}
+button:disabled{opacity:.5}
 
-/* PROGRESS */
+.link-status{font-size:12px;margin-top:4px}
+.inactive{color:#ff4d4d}
+.active{color:#00ff7f}
+
 .progress-wrap{
   margin-top:10px;
   background:rgba(0,255,0,.15);
-  border-radius:5px;
+  border-radius:6px;
   overflow:hidden;
 }
 .progress{
   height:8px;
   width:0%;
   background:linear-gradient(90deg,#00ff7f,#00ffaa);
-  transition:width .4s;
 }
-.eta{
-  font-size:11px;
-  margin-top:4px;
-  color:#9f9;
-}
+.eta{font-size:11px;text-align:right;margin-top:4px}
 
-/* STATUS */
 .status-box{
   margin-top:10px;
-  height:260px;
+  height:240px;
   overflow-y:auto;
   font-size:12px;
 }
 .log{
-  margin-bottom:7px;
-  padding:7px;
+  padding:8px;
+  margin-bottom:8px;
   border-left:3px solid #00ff7f;
-  background:rgba(0,255,0,.07);
+  background:rgba(0,255,0,.08);
 }
-.final{
-  border-left-color:#1e90ff;
-  background:rgba(30,144,255,.2);
-}
-.note{
-  font-size:11px;
-  color:#ffbaba;
-}
-
-/* MOBILE */
-@media(max-width:420px){
-  .status-box{height:220px;}
-  h2{font-size:16px;}
-}
+.final{border-left-color:#1e90ff}
+.note{color:#ffbaba;font-size:11px}
 </style>
 </head>
 
@@ -128,13 +82,7 @@ button:disabled{
 <canvas id="matrix"></canvas>
 
 <div class="container">
-  <h2>⚠ Mass Report Tool (Simulation)</h2>
-
-  <div class="targets">
-    <label><input type="radio" name="target" checked> Post</label>
-    <label><input type="radio" name="target"> Profile</label>
-    <label><input type="radio" name="target"> Page</label>
-  </div>
+  <h2>⚠ Live Status Report</h2>
 
   <select id="reason">
     <option>Fake Account</option>
@@ -144,120 +92,134 @@ button:disabled{
     <option>Impersonation</option>
   </select>
 
-  <input id="link" placeholder="Target Link (simulation)">
-  <button id="checkBtn" onclick="checkLink()">Check Link</button>
+  <input id="link" placeholder="Target Link">
+  <button id="checkBtn">Check Link</button>
+  <div id="linkStatus" class="link-status inactive">● Link Inactive</div>
 
   <input id="qty" type="number" placeholder="Quantity">
 
   <div class="progress-wrap">
     <div class="progress" id="progress"></div>
   </div>
-  <div class="eta" id="eta">ETA: --</div>
+  <div class="eta" id="eta">Estimated Time Remaining: --</div>
 
-  <button id="runBtn" onclick="startReport()">Run Process</button>
+  <button id="runBtn" disabled>Run Process</button>
 
   <div class="status-box" id="status"></div>
 </div>
 
 <script>
-/* MATRIX EFFECT */
-const canvas=document.getElementById("matrix");
-const ctx=canvas.getContext("2d");
-canvas.width=innerWidth;
-canvas.height=innerHeight;
-const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const drops=Array(Math.floor(canvas.width/12)).fill(1);
-function matrix(){
-  ctx.fillStyle="rgba(0,0,0,.08)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle="#0f0";
-  drops.forEach((y,i)=>{
-    const t=chars[Math.floor(Math.random()*chars.length)];
-    ctx.fillText(t,i*12,y*12);
-    drops[i]=y*12>canvas.height||Math.random()>0.95?0:y+1;
-  });
-}
-setInterval(matrix,50);
+/* MATRIX */
+const c=document.getElementById("matrix"),x=c.getContext("2d");
+c.width=innerWidth;c.height=innerHeight;
+const ch="01ABCDEFGHIJKLMNOPQRSTUVWXYZ",fs=14,cols=c.width/fs;
+const d=Array(Math.floor(cols)).fill(1);
+setInterval(()=>{
+ x.fillStyle="rgba(0,0,0,.08)";
+ x.fillRect(0,0,c.width,c.height);
+ x.fillStyle="#0f0";x.font=fs+"px Consolas";
+ d.forEach((y,i)=>{
+  const t=ch[Math.floor(Math.random()*ch.length)];
+  x.fillText(t,i*fs,y*fs);
+  if(y*fs>c.height&&Math.random()>.975)d[i]=0;
+  d[i]++;
+ });
+},50);
 
-/* UTILS */
-const rand=n=>Math.floor(Math.random()*n);
-const fakeIP=()=>`${rand(255)}.${rand(255)}.${rand(255)}.${rand(255)}`;
+/* LOGIC */
+const link=document.getElementById("link");
+const qty=document.getElementById("qty");
+const status=document.getElementById("status");
+const progress=document.getElementById("progress");
+const eta=document.getElementById("eta");
+const runBtn=document.getElementById("runBtn");
+const checkBtn=document.getElementById("checkBtn");
+const linkStatus=document.getElementById("linkStatus");
+const reason=document.getElementById("reason");
+
+let active=false,start=0;
+const speed=650;
+
+const r=m=>Math.floor(Math.random()*m);
+const fakeIP=()=>`FAKE-${r(255)}.${r(255)}.${r(255)}.${r(255)}`;
 const fakeToken=()=>{
-  const c="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let t="EAA";
-  for(let i=0;i<45;i++) t+=c[rand(c.length)];
-  return t;
+ let t="FAKE_TOKEN_";
+ const c="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+ for(let i=0;i<32;i++)t+=c[Math.floor(Math.random()*c.length)];
+ return t;
 };
-const delay=()=>Math.floor(Math.random()*1000)+5000; // 5–6 sec
+const now=()=>{
+ const d=new Date();
+ return{
+  date:d.getDate(),
+  month:d.toLocaleString("en",{month:"long"}),
+  time:d.toLocaleTimeString()
+ };
+};
 
-let startTime=0;
+/* CHECK LINK */
+checkBtn.onclick=()=>{
+ if(!link.value){alert("Enter link");return}
+ checkBtn.disabled=true;
+ linkStatus.textContent="● Checking link...";
+ setTimeout(()=>{
+  active=true;
+  linkStatus.textContent="● Link Active";
+  linkStatus.className="link-status active";
+  runBtn.disabled=false;
+  checkBtn.disabled=false;
+ },(r(4)+4)*1000);
+};
 
-/* LINK CHECK */
-function checkLink(){
-  const btn=checkBtn;
-  btn.disabled=true;
-  btn.innerText="Checking...";
+/* RUN */
+runBtn.onclick=()=>{
+ if(!active){alert("Link inactive");return}
+ const q=Number(qty.value);
+ if(!q){alert("Enter quantity");return}
+
+ status.innerHTML="";
+ progress.style.width="0%";
+ runBtn.disabled=true;
+ start=Date.now();
+ const total=(q*speed)/1000;
+
+ for(let i=1;i<=q;i++){
   setTimeout(()=>{
-    status.innerHTML+=`<div class="log">🔗 Link Status: <b>ACTIVE</b> ✔</div>`;
-    status.scrollTop=status.scrollHeight;
-    btn.disabled=false;
-    btn.innerText="Check Link";
-  },rand(3000)+3000);
-}
+   const p=Math.floor((i/q)*100);
+   progress.style.width=p+"%";
+   const el=(Date.now()-start)/1000;
+   eta.textContent=`Estimated Time Remaining: ${(total-el).toFixed(1)}s`;
 
-/* REPORT PROCESS */
-async function startReport(){
-  const qty=Number(qty.value);
-  const linkVal=link.value.trim();
-  if(!qty||!linkVal){ alert("Fill all fields"); return; }
-
-  runBtn.disabled=true;
-  status.innerHTML="";
-  progress.style.width="0%";
-  startTime=Date.now();
-
-  for(let i=1;i<=qty;i++){
-    const wait=delay();
-    const remaining=(qty-i+1)*(wait/1000);
-    eta.innerText=`ETA: ~${remaining.toFixed(1)}s`;
-
-    await new Promise(r=>setTimeout(r,wait));
-
-    const now=new Date();
-    progress.style.width=Math.floor((i/qty)*100)+"%";
-
-    status.innerHTML+=`
-    <div class="log">
-    📌 Report ${i}<br>
-    🔐 Country : 🇵🇭 <br>
-    🧾 Reason: ${reason.value}<br>
+   const t=now();
+   status.innerHTML+=`
+   <div class="log">
+    🔄 Report Process ${i}<br>
+    🔐 Authenticity: <b>FAKE</b><br>
     🌐 IP Address: ${fakeIP()}<br>
-    📅 Date: ${now.toDateString()}<br>
-    ⏰ Time: ${now.toLocaleTimeString()}<br>
-    🔑 Token: ${fakeToken()}<br>
-    ✅ Status: Successful
-    </div>`;
-    status.scrollTop=status.scrollHeight;
-  }
+    📅 Date: ${t.date}<br>
+    📆 Month: ${t.month}<br>
+    ⏰ Time: ${t.time}<br>
+    🧾 Reason: ${reason.value}<br>
+    🔗 Link: ${link.value}<br>
+    🔑 ${fakeToken()}<br>
+    ✅ Successfully Report
+   </div>`;
+   status.scrollTop=status.scrollHeight;
 
-  finish();
-}
+   if(i===q) finish();
+  },i*speed);
+ }
+};
 
 function finish(){
-  const total=((Date.now()-startTime)/1000).toFixed(1);
-  progress.style.width="100%";
-  eta.innerText="ETA: Done";
-
-  status.innerHTML+=`
-  <div class="log final">
-  ✅ All report sent successfully<br>
-  ⏱ Process Time: ${total}s<br><br>
-  <div class="note">
-  ⚠ 50–60% chance of success or suspension<br>
-  ⚠ Don't abuse processed links
-  </div>
-  </div>`;
-  runBtn.disabled=false;
+ progress.style.width="100%";
+ eta.textContent="Estimated Time Remaining: 0s";
+ status.innerHTML+=`
+ <div class="log final">
+  ✅ All reports completed<br>
+  ⚠ Simulation only / Fake data
+ </div>`;
+ runBtn.disabled=false;
 }
 </script>
 
