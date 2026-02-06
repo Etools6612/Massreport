@@ -2,48 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Mass Report Tool (Simulation)</title>
+<title>Live Status Report (Simulation)</title>
 
 <style>
 *{font-family:Consolas,monospace;box-sizing:border-box}
-
-/* MATRIX */
-canvas{
-  position:fixed;
-  top:0;left:0;
-  z-index:-1;
-}
-
+canvas{position:fixed;top:0;left:0;z-index:-1}
 body{
   margin:0;
-  min-height:100vh;
   background:black;
+  min-height:100vh;
   display:flex;
   justify-content:center;
   align-items:center;
   color:#0f0;
 }
-
 .container{
   width:440px;
   max-width:95%;
-  background:rgba(0,0,0,.78);
-  border-radius:18px;
+  background:rgba(0,0,0,.8);
   padding:18px;
-  box-shadow:0 0 35px rgba(0,255,0,.35);
+  border-radius:18px;
+  box-shadow:0 0 30px rgba(0,255,0,.4);
 }
-
-h2{
-  text-align:center;
-  color:#00ff7f;
-  margin-bottom:10px;
-}
-
-.targets{
-  display:flex;
-  justify-content:space-around;
-  font-size:13px;
-}
+h2{text-align:center;color:#00ff7f}
 
 input,select,button{
   width:100%;
@@ -51,28 +32,21 @@ input,select,button{
   margin-top:7px;
   border-radius:7px;
   border:none;
-  background:rgba(0,255,0,.1);
+  background:rgba(0,255,0,.12);
   color:#0f0;
 }
-
 button{
   background:linear-gradient(135deg,#00ff7f,#00cc66);
-  color:#000;
+  color:black;
   font-weight:bold;
   cursor:pointer;
 }
-
 button:disabled{opacity:.5}
 
-/* LINK STATUS */
-.link-status{
-  margin-top:6px;
-  font-size:12px;
-}
+.link-status{font-size:12px;margin-top:4px}
 .inactive{color:#ff4d4d}
 .active{color:#00ff7f}
 
-/* PROGRESS */
 .progress-wrap{
   margin-top:10px;
   background:rgba(0,255,0,.15);
@@ -84,13 +58,8 @@ button:disabled{opacity:.5}
   width:0%;
   background:linear-gradient(90deg,#00ff7f,#00ffaa);
 }
-.eta{
-  font-size:11px;
-  text-align:right;
-  margin-top:4px;
-}
+.eta{font-size:11px;text-align:right;margin-top:4px}
 
-/* STATUS */
 .status-box{
   margin-top:10px;
   height:240px;
@@ -105,12 +74,6 @@ button:disabled{opacity:.5}
 }
 .final{border-left-color:#1e90ff}
 .note{color:#ffbaba;font-size:11px}
-
-/* MOBILE */
-@media(max-width:420px){
-  .status-box{height:200px}
-  h2{font-size:16px}
-}
 </style>
 </head>
 
@@ -119,13 +82,7 @@ button:disabled{opacity:.5}
 <canvas id="matrix"></canvas>
 
 <div class="container">
-  <h2>⚠ Mass Report Tool</h2>
-
-  <div class="targets">
-    <label><input type="radio" name="target" checked> Post</label>
-    <label><input type="radio" name="target"> Profile</label>
-    <label><input type="radio" name="target"> Page</label>
-  </div>
+  <h2>⚠ Live Status Report</h2>
 
   <select id="reason">
     <option>Fake Account</option>
@@ -137,7 +94,7 @@ button:disabled{opacity:.5}
 
   <input id="link" placeholder="Target Link">
   <button id="checkBtn">Check Link</button>
-  <div class="link-status inactive" id="linkStatus">● Link Inactive</div>
+  <div id="linkStatus" class="link-status inactive">● Link Inactive</div>
 
   <input id="qty" type="number" placeholder="Quantity">
 
@@ -152,31 +109,27 @@ button:disabled{opacity:.5}
 </div>
 
 <script>
-/* ===== MATRIX RAIN ===== */
-const canvas=document.getElementById("matrix");
-const ctx=canvas.getContext("2d");
-canvas.width=innerWidth; canvas.height=innerHeight;
-const chars="01ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const size=14, cols=canvas.width/size;
-const drops=Array(Math.floor(cols)).fill(1);
-
+/* MATRIX */
+const c=document.getElementById("matrix"),x=c.getContext("2d");
+c.width=innerWidth;c.height=innerHeight;
+const ch="01ABCDEFGHIJKLMNOPQRSTUVWXYZ",fs=14,cols=c.width/fs;
+const d=Array(Math.floor(cols)).fill(1);
 setInterval(()=>{
-  ctx.fillStyle="rgba(0,0,0,.08)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle="#0f0";
-  ctx.font=size+"px Consolas";
-  drops.forEach((y,i)=>{
-    const t=chars[Math.floor(Math.random()*chars.length)];
-    ctx.fillText(t,i*size,y*size);
-    if(y*size>canvas.height&&Math.random()>.975)drops[i]=0;
-    drops[i]++;
-  });
+ x.fillStyle="rgba(0,0,0,.08)";
+ x.fillRect(0,0,c.width,c.height);
+ x.fillStyle="#0f0";x.font=fs+"px Consolas";
+ d.forEach((y,i)=>{
+  const t=ch[Math.floor(Math.random()*ch.length)];
+  x.fillText(t,i*fs,y*fs);
+  if(y*fs>c.height&&Math.random()>.975)d[i]=0;
+  d[i]++;
+ });
 },50);
 
-/* ===== TOOL LOGIC ===== */
-const linkInput=document.getElementById("link");
-const qtyInput=document.getElementById("qty");
-const statusBox=document.getElementById("status");
+/* LOGIC */
+const link=document.getElementById("link");
+const qty=document.getElementById("qty");
+const status=document.getElementById("status");
 const progress=document.getElementById("progress");
 const eta=document.getElementById("eta");
 const runBtn=document.getElementById("runBtn");
@@ -184,84 +137,89 @@ const checkBtn=document.getElementById("checkBtn");
 const linkStatus=document.getElementById("linkStatus");
 const reason=document.getElementById("reason");
 
-let linkActive=false;
-let startTime=0;
-const perProcess=650;
+let active=false,start=0;
+const speed=650;
 
-function r(max){return Math.floor(Math.random()*max)}
-function ip(){return`${r(255)}.${r(255)}.${r(255)}.${r(255)}`}
-function token(){
-  let t="EAA",c="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  for(let i=0;i<45;i++)t+=c[Math.floor(Math.random()*c.length)];
-  return t;
-}
-
-/* LINK CHECK */
-checkBtn.onclick=()=>{
-  if(!linkInput.value){alert("Enter link first");return}
-  checkBtn.disabled=true;
-  linkStatus.textContent="● Checking link...";
-  linkStatus.className="link-status inactive";
-
-  setTimeout(()=>{
-    linkActive=true;
-    linkStatus.textContent="● Link Active";
-    linkStatus.className="link-status active";
-    runBtn.disabled=false;
-    checkBtn.disabled=false;
-  },(r(4)+5)*1000);
+const r=m=>Math.floor(Math.random()*m);
+const fakeIP=()=>`FAKE-${r(255)}.${r(255)}.${r(255)}.${r(255)}`;
+const fakeToken=()=>{
+ let t="FAKE_TOKEN_";
+ const c="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+ for(let i=0;i<32;i++)t+=c[Math.floor(Math.random()*c.length)];
+ return t;
+};
+const now=()=>{
+ const d=new Date();
+ return{
+  date:d.getDate(),
+  month:d.toLocaleString("en",{month:"long"}),
+  time:d.toLocaleTimeString()
+ };
 };
 
-/* RUN PROCESS */
+/* CHECK LINK */
+checkBtn.onclick=()=>{
+ if(!link.value){alert("Enter link");return}
+ checkBtn.disabled=true;
+ linkStatus.textContent="● Checking link...";
+ setTimeout(()=>{
+  active=true;
+  linkStatus.textContent="● Link Active";
+  linkStatus.className="link-status active";
+  runBtn.disabled=false;
+  checkBtn.disabled=false;
+ },(r(4)+4)*1000);
+};
+
+/* RUN */
 runBtn.onclick=()=>{
-  if(!linkActive){alert("Link not active");return}
-  const qty=Number(qtyInput.value);
-  if(!qty){alert("Enter quantity");return}
+ if(!active){alert("Link inactive");return}
+ const q=Number(qty.value);
+ if(!q){alert("Enter quantity");return}
 
-  statusBox.innerHTML="";
-  progress.style.width="0%";
-  startTime=Date.now();
-  runBtn.disabled=true;
+ status.innerHTML="";
+ progress.style.width="0%";
+ runBtn.disabled=true;
+ start=Date.now();
+ const total=(q*speed)/1000;
 
-  const totalTime=(qty*perProcess)/1000;
+ for(let i=1;i<=q;i++){
+  setTimeout(()=>{
+   const p=Math.floor((i/q)*100);
+   progress.style.width=p+"%";
+   const el=(Date.now()-start)/1000;
+   eta.textContent=`Estimated Time Remaining: ${(total-el).toFixed(1)}s`;
 
-  for(let i=1;i<=qty;i++){
-    setTimeout(()=>{
-      const percent=Math.floor((i/qty)*100);
-      progress.style.width=percent+"%";
-      const elapsed=(Date.now()-startTime)/1000;
-      eta.textContent=`Estimated Time Remaining: ${(totalTime-elapsed).toFixed(1)}s`;
+   const t=now();
+   status.innerHTML+=`
+   <div class="log">
+    🔄 Report Process ${i}<br>
+    🔐 Authenticity: <b>FAKE</b><br>
+    🌐 IP Address: ${fakeIP()}<br>
+    📅 Date: ${t.date}<br>
+    📆 Month: ${t.month}<br>
+    ⏰ Time: ${t.time}<br>
+    🧾 Reason: ${reason.value}<br>
+    🔗 Link: ${link.value}<br>
+    🔑 ${fakeToken()}<br>
+    ✅ Successfully Report
+   </div>`;
+   status.scrollTop=status.scrollHeight;
 
-      statusBox.innerHTML+=`
-      <div class="log">
-        📌 Process ${i}<br>
-        🔐 Authenticity: Fake<br>
-        🧾 Reason: ${reason.value}<br>
-        🌐 IP: ${ip()}<br>
-        🔑 ${token()}<br>
-        ✅ Successful
-      </div>`;
-      statusBox.scrollTop=statusBox.scrollHeight;
-
-      if(i===qty) finish();
-    },i*perProcess);
-  }
+   if(i===q) finish();
+  },i*speed);
+ }
 };
 
 function finish(){
-  const total=((Date.now()-startTime)/1000).toFixed(1);
-  eta.textContent="Estimated Time Remaining: 0s";
-  progress.style.width="100%";
-  statusBox.innerHTML+=`
-  <div class="log final">
-    ✅ All report sent successfully<br>
-    ⏱ Process Time: ${total}s<br><br>
-    <div class="note">
-      ⚠ 50–60% chance of suspension or success<br>
-      ⚠ Don't abuse processed links
-    </div>
-  </div>`;
-  runBtn.disabled=false;
+ progress.style.width="100%";
+ eta.textContent="Estimated Time Remaining: 0s";
+ status.innerHTML+=`
+ <div class="log final">
+  ✅ All reports completed<br>
+  ⚠ Simulation only / Fake data
+ </div>`;
+ runBtn.disabled=false;
 }
 </script>
 
