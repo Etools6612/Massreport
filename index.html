@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mass Report ⚠️</title>
+<style>
+body{background:#0f172a;color:white;font-family:sans-serif}
+.box{background:#111827;padding:15px;border-radius:10px;margin:10px}
+button{padding:10px 15px;background:#2563eb;color:white;border:none;border-radius:6px}
+.success{color:#22c55e}
+.loading{color:#eab308}
+</style>
+</head>
+<body>
+
+<h2>⚠️ Mass Report</h2>
+
+<div class="box">
+<b>Select Target</b><br>
+<input type="radio" name="t"> Post
+<input type="radio" name="t"> Video
+<input type="radio" name="t"> Profile
+</div>
+
+<div class="box">
+<input placeholder="Enter FB Link" id="link">
+<button onclick="checkLink()">Check Link</button>
+<p id="linkStatus"></p>
+</div>
+
+<div class="box">
+<input type="number" id="qty" placeholder="1 - 5000" disabled>
+<button onclick="start()">Run Process</button>
+</div>
+
+<div class="box" id="log"></div>
+
+<script>
+function checkLink(){
+ let s=document.getElementById("linkStatus");
+ s.innerHTML="<span class='loading'>Checking...</span>";
+ setTimeout(()=>{
+  s.innerHTML="<span class='success'>Valid link ✔️</span>";
+  document.getElementById("qty").disabled=false;
+ },5000);
+}
+function start(){
+ let log=document.getElementById("log");
+ let count=0;
+ let max=document.getElementById("qty").value;
+ let i=setInterval(()=>{
+  count++;
+  log.innerHTML+=`<p class='success'>Report ${count} sent ✔️</p>`;
+  if(count>=max) clearInterval(i);
+ },5000);
+}
+</script>
+
+</body>
+</html>
