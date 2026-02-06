@@ -8,38 +8,25 @@
 *{font-family:Consolas,monospace;box-sizing:border-box}
 canvas{position:fixed;top:0;left:0;z-index:-1}
 body{
-  margin:0;
-  background:black;
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  color:#0f0;
+  margin:0;background:black;min-height:100vh;
+  display:flex;justify-content:center;align-items:center;color:#0f0
 }
 .container{
-  width:440px;
-  max-width:95%;
+  width:440px;max-width:95%;
   background:rgba(0,0,0,.8);
-  padding:18px;
-  border-radius:18px;
-  box-shadow:0 0 30px rgba(0,255,0,.4);
+  padding:18px;border-radius:18px;
+  box-shadow:0 0 30px rgba(0,255,0,.4)
 }
 h2{text-align:center;color:#00ff7f}
 
 input,select,button{
-  width:100%;
-  padding:9px;
-  margin-top:7px;
-  border-radius:7px;
-  border:none;
-  background:rgba(0,255,0,.12);
-  color:#0f0;
+  width:100%;padding:9px;margin-top:7px;
+  border-radius:7px;border:none;
+  background:rgba(0,255,0,.12);color:#0f0
 }
 button{
   background:linear-gradient(135deg,#00ff7f,#00cc66);
-  color:black;
-  font-weight:bold;
-  cursor:pointer;
+  color:black;font-weight:bold;cursor:pointer
 }
 button:disabled{opacity:.5}
 
@@ -48,29 +35,23 @@ button:disabled{opacity:.5}
 .active{color:#00ff7f}
 
 .progress-wrap{
-  margin-top:10px;
-  background:rgba(0,255,0,.15);
-  border-radius:6px;
-  overflow:hidden;
+  margin-top:10px;background:rgba(0,255,0,.15);
+  border-radius:6px;overflow:hidden
 }
 .progress{
-  height:8px;
-  width:0%;
-  background:linear-gradient(90deg,#00ff7f,#00ffaa);
+  height:8px;width:0%;
+  background:linear-gradient(90deg,#00ff7f,#00ffaa)
 }
 .eta{font-size:11px;text-align:right;margin-top:4px}
 
 .status-box{
-  margin-top:10px;
-  height:240px;
-  overflow-y:auto;
-  font-size:12px;
+  margin-top:10px;height:240px;
+  overflow-y:auto;font-size:12px
 }
 .log{
-  padding:8px;
-  margin-bottom:8px;
+  padding:8px;margin-bottom:8px;
   border-left:3px solid #00ff7f;
-  background:rgba(0,255,0,.08);
+  background:rgba(0,255,0,.08)
 }
 .final{border-left-color:#1e90ff}
 .note{color:#ffbaba;font-size:11px}
@@ -92,7 +73,7 @@ button:disabled{opacity:.5}
     <option>Impersonation</option>
   </select>
 
-  <input id="link" placeholder="Target Link">
+  <input id="link" placeholder="Facebook Link only">
   <button id="checkBtn">Check Link</button>
   <div id="linkStatus" class="link-status inactive">● Link Inactive</div>
 
@@ -109,11 +90,11 @@ button:disabled{opacity:.5}
 </div>
 
 <script>
-/* MATRIX */
+/* MATRIX EFFECT */
 const c=document.getElementById("matrix"),x=c.getContext("2d");
 c.width=innerWidth;c.height=innerHeight;
-const ch="01ABCDEFGHIJKLMNOPQRSTUVWXYZ",fs=14,cols=c.width/fs;
-const d=Array(Math.floor(cols)).fill(1);
+const ch="01ABCDEFGHIJKLMNOPQRSTUVWXYZ",fs=14;
+const cols=c.width/fs,d=Array(Math.floor(cols)).fill(1);
 setInterval(()=>{
  x.fillStyle="rgba(0,0,0,.08)";
  x.fillRect(0,0,c.width,c.height);
@@ -126,7 +107,7 @@ setInterval(()=>{
  });
 },50);
 
-/* LOGIC */
+/* ELEMENTS */
 const link=document.getElementById("link");
 const qty=document.getElementById("qty");
 const status=document.getElementById("status");
@@ -137,15 +118,13 @@ const checkBtn=document.getElementById("checkBtn");
 const linkStatus=document.getElementById("linkStatus");
 const reason=document.getElementById("reason");
 
-let active=false,start=0;
-const speed=650;
-
-const r=m=>Math.floor(Math.random()*m);
+/* HELPERS */
+const r=n=>Math.floor(Math.random()*n);
 const fakeIP=()=>`FAKE-${r(255)}.${r(255)}.${r(255)}.${r(255)}`;
 const fakeToken=()=>{
- let t="FAKE_TOKEN_";
+ let t="EAA";
  const c="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
- for(let i=0;i<32;i++)t+=c[Math.floor(Math.random()*c.length)];
+ for(let i=0;i<45;i++)t+=c[Math.floor(Math.random()*c.length)];
  return t;
 };
 const now=()=>{
@@ -157,23 +136,41 @@ const now=()=>{
  };
 };
 
+/* FACEBOOK LINK CHECK */
+function isFacebookLink(url){
+ return /^(https?:\/\/)?(www\.)?(facebook\.com|fb\.com|fb\.watch)\//i.test(url);
+}
+
+let active=false,start=0;
+const speed=5500; // 5–6 seconds realistic base
+
 /* CHECK LINK */
 checkBtn.onclick=()=>{
  if(!link.value){alert("Enter link");return}
  checkBtn.disabled=true;
+ runBtn.disabled=true;
+ active=false;
+
  linkStatus.textContent="● Checking link...";
+ linkStatus.className="link-status inactive";
+
  setTimeout(()=>{
-  active=true;
-  linkStatus.textContent="● Link Active";
-  linkStatus.className="link-status active";
-  runBtn.disabled=false;
+  if(isFacebookLink(link.value)){
+   active=true;
+   linkStatus.textContent="● Facebook Link Active ✔";
+   linkStatus.className="link-status active";
+   runBtn.disabled=false;
+  }else{
+   linkStatus.textContent="● Invalid Link (Facebook only)";
+   linkStatus.className="link-status inactive";
+  }
   checkBtn.disabled=false;
- },(r(4)+4)*1000);
+ },(r(3)+4)*1000);
 };
 
-/* RUN */
-runBtn.onclick=()=>{
- if(!active){alert("Link inactive");return}
+/* RUN PROCESS */
+runBtn.onclick=async()=>{
+ if(!active){alert("Invalid or inactive link");return}
  const q=Number(qty.value);
  if(!q){alert("Enter quantity");return}
 
@@ -181,34 +178,34 @@ runBtn.onclick=()=>{
  progress.style.width="0%";
  runBtn.disabled=true;
  start=Date.now();
- const total=(q*speed)/1000;
 
  for(let i=1;i<=q;i++){
-  setTimeout(()=>{
-   const p=Math.floor((i/q)*100);
-   progress.style.width=p+"%";
-   const el=(Date.now()-start)/1000;
-   eta.textContent=`Estimated Time Remaining: ${(total-el).toFixed(1)}s`;
+  const delay=Math.floor(Math.random()*1000)+5000;
+  await new Promise(r=>setTimeout(r,delay));
 
-   const t=now();
-   status.innerHTML+=`
-   <div class="log">
-    🔄 Report Process ${i}<br>
-    🔐 Country: <b>🇵🇭</b><br>
-    🌐 IP Address: ${fakeIP()}<br>
-    📅 Date: ${t.date}<br>
-    📆 Month: ${t.month}<br>
-    ⏰ Time: ${t.time}<br>
-    🧾 Reason: ${reason.value}<br>
-    🔗 Link: ${link.value}<br>
-    🔑 ${fakeToken()}<br>
-    ✅ Successfully Report
-   </div>`;
-   status.scrollTop=status.scrollHeight;
+  const p=Math.floor((i/q)*100);
+  progress.style.width=p+"%";
+  const elapsed=(Date.now()-start)/1000;
+  eta.textContent=`Estimated Time Remaining: ~${((q-i)*5.5).toFixed(1)}s`;
 
-   if(i===q) finish();
-  },i*speed);
+  const t=now();
+  status.innerHTML+=`
+  <div class="log">
+   🔄 Report Process ${i}<br>
+   🔐 User id : ${link.value}<br>
+   🌐 IP Address: ${fakeIP()}<br>
+   📅 Date: ${t.date}<br>
+   📆 Month: ${t.month}<br>
+   ⏰ Time: ${t.time}<br>
+   🧾 Reason: ${reason.value}<br>
+   🔗 Link: ${link.value}<br>
+   🔑 Token: ${fakeToken()}<br>
+   ✅ Successfully Report
+  </div>`;
+  status.scrollTop=status.scrollHeight;
  }
+
+ finish();
 };
 
 function finish(){
@@ -217,7 +214,10 @@ function finish(){
  status.innerHTML+=`
  <div class="log final">
   ✅ All reports completed<br>
-  ⚠ dont process same link with in 24 hours 
+  <div class="note">
+   ⚠ DO NOT Process same link after 24 hours<br>
+   ⚠ DO NOT ABUSE
+  </div>
  </div>`;
  runBtn.disabled=false;
 }
