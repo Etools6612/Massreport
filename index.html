@@ -12,10 +12,10 @@ body{
   display:flex;justify-content:center;align-items:center;color:#0f0
 }
 
-/* LOGIN OVERLAY */
+/* LOGIN */
 .login-overlay{
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,.9);
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.92);
   display:flex;justify-content:center;align-items:center;
   z-index:10
 }
@@ -26,7 +26,7 @@ body{
   box-shadow:0 0 30px rgba(0,255,0,.4)
 }
 .login-box h2{text-align:center;color:#00ff7f}
-.login-box input, .login-box button{
+.login-box input,.login-box button{
   width:100%;padding:10px;margin-top:10px;
   border-radius:7px;border:none;
   background:rgba(0,255,0,.12);color:#0f0
@@ -35,18 +35,16 @@ body{
   background:linear-gradient(135deg,#00ff7f,#00cc66);
   color:black;font-weight:bold;cursor:pointer
 }
-.error{color:#ff4d4d;font-size:12px;margin-top:8px;text-align:center}
+.error{color:#ff4d4d;font-size:12px;text-align:center;margin-top:8px}
 .note-login{
-  margin-top:10px;font-size:11px;color:#ffbaba;text-align:center
+  margin-top:10px;font-size:11px;
+  color:#ffbaba;text-align:center
 }
-.msg-btn{
-  margin-top:12px;text-align:center
-}
+.msg-btn{text-align:center;margin-top:12px}
 .msg-btn a{
-  display:inline-block;padding:8px 14px;
+  padding:8px 14px;border-radius:8px;
   background:rgba(0,255,0,.15);
-  border-radius:8px;color:#00ff7f;
-  text-decoration:none;font-size:12px
+  color:#00ff7f;text-decoration:none;font-size:12px
 }
 
 /* MAIN UI */
@@ -106,16 +104,14 @@ button:disabled{opacity:.5}
 <div class="login-overlay" id="loginBox">
   <div class="login-box">
     <h2>🔐 Security Login</h2>
-
     <input id="user" placeholder="Username">
     <input id="pass" type="password" placeholder="Password">
     <button onclick="login()">Log In</button>
-
     <div id="error" class="error"></div>
 
     <div class="note-login">
       ⚠ You can open this tool by <b>admin approval</b><br>
-      Please message the admin to log in.
+      Please message the admin to log in
     </div>
 
     <div class="msg-btn">
@@ -136,6 +132,7 @@ button:disabled{opacity:.5}
     <option>Harassment</option>
     <option>Hate Speech</option>
     <option>Impersonation</option>
+    <option>OTHERS</option>
   </select>
 
   <input id="link" placeholder="Facebook Link only">
@@ -150,12 +147,11 @@ button:disabled{opacity:.5}
   <div class="eta" id="eta">Estimated Time Remaining: --</div>
 
   <button id="runBtn" disabled>Run Process</button>
-
   <div class="status-box" id="status"></div>
 </div>
 
 <script>
-/* MATRIX EFFECT */
+/* MATRIX */
 const c=document.getElementById("matrix"),x=c.getContext("2d");
 c.width=innerWidth;c.height=innerHeight;
 const ch="01ABCDEFGHIJKLMNOPQRSTUVWXYZ",fs=14;
@@ -173,19 +169,14 @@ setInterval(()=>{
 },50);
 
 /* LOGIN LOGIC */
-const ADMIN_USER="admin";
-const ADMIN_PASS="admin123";
-
+const ADMIN_USER="QF-340889";
+const ADMIN_PASS="2026";
 function login(){
- const u=document.getElementById("user").value;
- const p=document.getElementById("pass").value;
- const e=document.getElementById("error");
-
- if(u===ADMIN_USER && p===ADMIN_PASS){
-  document.getElementById("loginBox").style.display="none";
-  document.getElementById("mainUI").style.display="block";
+ if(user.value===ADMIN_USER && pass.value===ADMIN_PASS){
+  loginBox.style.display="none";
+  mainUI.style.display="block";
  }else{
-  e.textContent="❌ Invalid username or password";
+  error.textContent="❌ Invalid username or password";
  }
 }
 
@@ -204,37 +195,26 @@ const reason=document.getElementById("reason");
 const r=n=>Math.floor(Math.random()*n);
 const fakeIP=()=>`ACTIVE-${r(255)}.${r(255)}.${r(255)}.${r(255)}`;
 const fakeToken=()=>{
- let t="EAA";
- const c="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+ let t="EAA",c="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
  for(let i=0;i<45;i++)t+=c[Math.floor(Math.random()*c.length)];
  return t;
 };
 const now=()=>{
  const d=new Date();
- return{
-  date:d.getDate(),
-  month:d.toLocaleString("en",{month:"long"}),
-  time:d.toLocaleTimeString()
- };
+ return{date:d.getDate(),month:d.toLocaleString("en",{month:"long"}),time:d.toLocaleTimeString()};
 };
 
 /* LINK CHECK */
 function isFacebookLink(url){
  return /^(https?:\/\/)?(www\.)?(facebook\.com|fb\.com|fb\.watch)\//i.test(url);
 }
-
 let active=false,start=0;
 
 /* CHECK */
 checkBtn.onclick=()=>{
- if(!link.value){alert("Enter link");return}
- checkBtn.disabled=true;
- runBtn.disabled=true;
- active=false;
-
+ if(!link.value)return alert("Enter link");
+ checkBtn.disabled=true;runBtn.disabled=true;active=false;
  linkStatus.textContent="● Checking link...";
- linkStatus.className="link-status inactive";
-
  setTimeout(()=>{
   if(isFacebookLink(link.value)){
    active=true;
@@ -242,7 +222,8 @@ checkBtn.onclick=()=>{
    linkStatus.className="link-status active";
    runBtn.disabled=false;
   }else{
-   linkStatus.textContent="● Invalid Link (Facebook only)";
+   linkStatus.textContent="● Invalid Link";
+   linkStatus.className="link-status inactive";
   }
   checkBtn.disabled=false;
  },4000);
@@ -250,12 +231,12 @@ checkBtn.onclick=()=>{
 
 /* RUN */
 runBtn.onclick=async()=>{
+ if(!active)return alert("Invalid link");
  const q=Number(qty.value);
- if(!q){alert("Enter quantity");return}
+ if(!q)return alert("Enter quantity");
 
- status.innerHTML="";
- progress.style.width="0%";
- start=Date.now();
+ status.innerHTML="";progress.style.width="0%";
+ start=Date.now();runBtn.disabled=true;
 
  for(let i=1;i<=q;i++){
   await new Promise(r=>setTimeout(r,5500));
@@ -274,7 +255,22 @@ runBtn.onclick=async()=>{
   </div>`;
   status.scrollTop=status.scrollHeight;
  }
+ finish();
 };
+
+function finish(){
+ progress.style.width="100%";
+ eta.textContent="Estimated Time Remaining: 0s";
+ status.innerHTML+=`
+ <div class="log final">
+  ✅ ALL REPORTS COMPLETED
+  <div class="note">
+   ⚠ DO NOT process same link within 24 hours<br>
+   ⚠ DO NOT ABUSE 100-1000 report daily 
+  </div>
+ </div>`;
+ runBtn.disabled=false;
+}
 </script>
 
 </body>
