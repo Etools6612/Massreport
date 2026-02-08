@@ -11,11 +11,51 @@ body{
   margin:0;background:black;min-height:100vh;
   display:flex;justify-content:center;align-items:center;color:#0f0
 }
+
+/* LOGIN OVERLAY */
+.login-overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,.9);
+  display:flex;justify-content:center;align-items:center;
+  z-index:10
+}
+.login-box{
+  width:380px;max-width:95%;
+  background:rgba(0,0,0,.85);
+  padding:20px;border-radius:18px;
+  box-shadow:0 0 30px rgba(0,255,0,.4)
+}
+.login-box h2{text-align:center;color:#00ff7f}
+.login-box input, .login-box button{
+  width:100%;padding:10px;margin-top:10px;
+  border-radius:7px;border:none;
+  background:rgba(0,255,0,.12);color:#0f0
+}
+.login-box button{
+  background:linear-gradient(135deg,#00ff7f,#00cc66);
+  color:black;font-weight:bold;cursor:pointer
+}
+.error{color:#ff4d4d;font-size:12px;margin-top:8px;text-align:center}
+.note-login{
+  margin-top:10px;font-size:11px;color:#ffbaba;text-align:center
+}
+.msg-btn{
+  margin-top:12px;text-align:center
+}
+.msg-btn a{
+  display:inline-block;padding:8px 14px;
+  background:rgba(0,255,0,.15);
+  border-radius:8px;color:#00ff7f;
+  text-decoration:none;font-size:12px
+}
+
+/* MAIN UI */
 .container{
   width:440px;max-width:95%;
   background:rgba(0,0,0,.8);
   padding:18px;border-radius:18px;
-  box-shadow:0 0 30px rgba(0,255,0,.4)
+  box-shadow:0 0 30px rgba(0,255,0,.4);
+  display:none
 }
 h2{text-align:center;color:#00ff7f}
 
@@ -62,7 +102,32 @@ button:disabled{opacity:.5}
 
 <canvas id="matrix"></canvas>
 
-<div class="container">
+<!-- LOGIN -->
+<div class="login-overlay" id="loginBox">
+  <div class="login-box">
+    <h2>🔐 Security Login</h2>
+
+    <input id="user" placeholder="Username">
+    <input id="pass" type="password" placeholder="Password">
+    <button onclick="login()">Log In</button>
+
+    <div id="error" class="error"></div>
+
+    <div class="note-login">
+      ⚠ You can open this tool by <b>admin approval</b><br>
+      Please message the admin to log in.
+    </div>
+
+    <div class="msg-btn">
+      <a href="https://www.facebook.com/Kristinemaeal" target="_blank">
+        📩 Message here
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN TOOL -->
+<div class="container" id="mainUI">
   <h2>⚠ Live Status Report</h2>
 
   <select id="reason">
@@ -107,6 +172,23 @@ setInterval(()=>{
  });
 },50);
 
+/* LOGIN LOGIC */
+const ADMIN_USER="admin";
+const ADMIN_PASS="admin123";
+
+function login(){
+ const u=document.getElementById("user").value;
+ const p=document.getElementById("pass").value;
+ const e=document.getElementById("error");
+
+ if(u===ADMIN_USER && p===ADMIN_PASS){
+  document.getElementById("loginBox").style.display="none";
+  document.getElementById("mainUI").style.display="block";
+ }else{
+  e.textContent="❌ Invalid username or password";
+ }
+}
+
 /* ELEMENTS */
 const link=document.getElementById("link");
 const qty=document.getElementById("qty");
@@ -136,15 +218,14 @@ const now=()=>{
  };
 };
 
-/* FACEBOOK LINK CHECK */
+/* LINK CHECK */
 function isFacebookLink(url){
  return /^(https?:\/\/)?(www\.)?(facebook\.com|fb\.com|fb\.watch)\//i.test(url);
 }
 
 let active=false,start=0;
-const speed=5500; // 5–6 seconds realistic base
 
-/* CHECK LINK */
+/* CHECK */
 checkBtn.onclick=()=>{
  if(!link.value){alert("Enter link");return}
  checkBtn.disabled=true;
@@ -162,65 +243,38 @@ checkBtn.onclick=()=>{
    runBtn.disabled=false;
   }else{
    linkStatus.textContent="● Invalid Link (Facebook only)";
-   linkStatus.className="link-status inactive";
   }
   checkBtn.disabled=false;
- },(r(3)+4)*1000);
+ },4000);
 };
 
-/* RUN PROCESS */
+/* RUN */
 runBtn.onclick=async()=>{
- if(!active){alert("Invalid or inactive link");return}
  const q=Number(qty.value);
  if(!q){alert("Enter quantity");return}
 
  status.innerHTML="";
  progress.style.width="0%";
- runBtn.disabled=true;
  start=Date.now();
 
  for(let i=1;i<=q;i++){
-  const delay=Math.floor(Math.random()*1000)+5000;
-  await new Promise(r=>setTimeout(r,delay));
-
-  const p=Math.floor((i/q)*100);
-  progress.style.width=p+"%";
-  const elapsed=(Date.now()-start)/1000;
+  await new Promise(r=>setTimeout(r,5500));
+  progress.style.width=(i/q*100)+"%";
   eta.textContent=`Estimated Time Remaining: ~${((q-i)*5.5).toFixed(1)}s`;
 
   const t=now();
   status.innerHTML+=`
   <div class="log">
-   🔄 Report Process ${i}<br>
-   🔐 User id : ${link.value}<br>
-   🌐 IP Address: ${fakeIP()}<br>
-   📅 Date: ${t.date}<br>
-   📆 Month: ${t.month}<br>
-   ⏰ Time: ${t.time}<br>
-   🧾 Reason: ${reason.value}<br>
-   🔗 Link: ${link.value}<br>
-   🔑 Token: ${fakeToken()}<br>
+   🔄 Report ${i}<br>
+   🌐 IP: ${fakeIP()}<br>
+   ⏰ ${t.time}<br>
+   🧾 ${reason.value}<br>
+   🔑 ${fakeToken()}<br>
    ✅ Successfully Report
   </div>`;
   status.scrollTop=status.scrollHeight;
  }
-
- finish();
 };
-
-function finish(){
- progress.style.width="100%";
- eta.textContent="Estimated Time Remaining: 0s";
- status.innerHTML+=`
- <div class="log final">
-  ✅ All reports completed<br>
-  <div class="note">
-   ⚠ DO NOT Process same link after 24 hours<br>
-   ⚠ DO NOT ABUSE
-  </div>
- </div>`;
- runBtn.disabled=false;
-}
 </script>
 
 </body>
